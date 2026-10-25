@@ -1,6 +1,6 @@
 # Análisis de casos de COVID-19 en Colombia con Apache Spark
 
-Tarea 3 del curso Big Data, UNAD. Procesamiento en batch con PySpark.
+Tarea 3 del curso Big Data, UNAD. Procesamiento en batch y en tiempo real con Apache Spark y Apache Kafka.
 
 **Autora:** Laura Victoria Quintero Urán
 
@@ -44,6 +44,38 @@ Identificar qué departamentos, grupos de edad y sexos concentraron más casos y
    ```
 4. Copiar y ejecutar el contenido de `analisis_covid_spark.py` por bloques, en el orden de los comentarios numerados.
 
+## Procesamiento en tiempo real con Kafka y Spark Streaming
+
+Archivos:
+
+- `kafka_producer.py`: productor que simula 10 sensores y envía cada segundo un registro con temperatura, humedad y marca de tiempo al tema `sensor_data` de Kafka.
+- `spark_streaming_consumer.py`: consumidor con Spark Structured Streaming que lee el tema, convierte el JSON a columnas y calcula el promedio de temperatura y humedad por sensor en ventanas de 1 minuto.
+
+Entorno: máquina virtual Ubuntu Server con Hadoop 3.3.6, Spark 3.5.8, Kafka 3.9.2 y Python 3.
+
+Pasos de ejecución:
+
+1. Iniciar ZooKeeper y Kafka:
+   ```
+   /opt/Kafka/bin/zookeeper-server-start.sh -daemon /opt/Kafka/config/zookeeper.properties
+   /opt/Kafka/bin/kafka-server-start.sh -daemon /opt/Kafka/config/server.properties
+   ```
+2. Crear el tema:
+   ```
+   /opt/Kafka/bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic sensor_data
+   ```
+3. En una terminal, ejecutar el productor:
+   ```
+   python3 kafka_producer.py
+   ```
+4. En otra terminal, ejecutar el consumidor:
+   ```
+   spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.8 spark_streaming_consumer.py
+   ```
+5. Revisar el procesamiento en la interfaz web de Spark, en el puerto 4040.
+
+Resultado: Spark procesa un lote nuevo cada vez que llegan datos y actualiza la tabla de promedios por sensor y minuto. En la prueba se procesaron más de 500 lotes, cada uno en unos 2 segundos.
+
 ## Tecnologías
 
-Python, Apache Spark con PySpark y Matplotlib.
+Python, Apache Spark con PySpark, Spark Structured Streaming, Apache Kafka y Matplotlib.
